@@ -21,20 +21,18 @@ build_job:
     - docker build -t frankstark/todo-flask .
   only:
     - main
-   
+
 # Job de testes
 test_job:
   stage: test
   image: python:3.10
-  services:
-    - docker:20.10.16-dind
   before_script:
     - echo "Setting up environment for tests..."
-    - pip3 install -r requirements.txt
-    - pip3 install pytest pytest-cov
+    - pip install -r requirements.txt
+    - pip install pytest pytest-cov
   script:
     - echo "Running Flask app tests..."
-    - pytest --cov=todo_project
+    - pytest --cov=todo_project --cov-report=xml
   artifacts:
     paths:
       - coverage.xml
@@ -42,7 +40,7 @@ test_job:
   only:
     - main
 
-# Job de deploy (substitua pela lógica de deploy que você deseja)
+# Job de deploy
 deploy_job:
   stage: deploy
   image: docker:20.10.16
@@ -62,4 +60,3 @@ deploy_job:
     - docker run -d -p 5000:5000 frankstark/todo-flask
   only:
     - main
-
