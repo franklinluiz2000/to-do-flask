@@ -1,0 +1,64 @@
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+  DOCKER_CLIENT_TIMEOUT: 600
+  COMPOSE_HTTP_TIMEOUT: 600
+  DOCKER_BUILDKIT: 0
+  COMPOSE_DOCKER_CLI_BUILD: 0
+
+stages:
+  - build
+  - test
+  - deploy
+
+# Job de build da imagem Docker
+build_job:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - echo "Building Docker image..."
+    - docker build -t frankstark/todo-flask .
+  only:
+    - main
+   
+# Job de testes
+test_job:
+  stage: test
+  image: python:3.10
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo "Setting up environment for tests..."
+    - pip3 install -r requirements.txt
+  script:
+    - echo "Running Flask app tests..."
+    - pytest --cov=todo_project
+  artifacts:
+    paths:
+      - coverage/
+    expire_in: 1 week
+  only:
+    - main
+
+# Job de deploy (substitua pela lógica de deploy que você deseja)
+deploy_job:
+  stage: deploy
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo "Stopping previous container if exists..."
+    - PORT_CONTAINERS=$(docker ps --filter "publish=5000" -q)
+    - echo $PORT_CONTAINERS
+    - if [ -n "$PORT_CONTAINERS" ]; then
+        docker stop $PORT_CONTAINERS;
+        docker rm $PORT_CONTAINERS;
+        sleep 5;
+      fi
+  script:
+    - echo "Deploying the app..."
+    - docker run -d -p 5000:5000 frankstark/todo-flask
+  only:
+    - main
+
