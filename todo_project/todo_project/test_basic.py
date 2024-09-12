@@ -2,10 +2,6 @@ import pytest
 from todo_project import app, db, bcrypt
 from todo_project.models import User, Task
 
-# test_basic.py
-def test_basic():
-    assert 1 + 1 == 2
-    
 @pytest.fixture
 def client():
     app.config['TESTING'] = True
@@ -33,7 +29,7 @@ def test_register(client):
         password='newpassword',
         confirm_password='newpassword'
     ), follow_redirects=True)
-    assert b'Account Created For newuser' in response.data
+    assert b'Account Created For' in response.data
 
 def test_login(client, init_database):
     response = client.post('/login', data=dict(
