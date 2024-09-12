@@ -3,12 +3,12 @@ from todo_project import app, db, bcrypt
 from todo_project.models import User, Task
 
 # Helper function to create a user
-def create_user(username, password):
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    user = User(username=username, password=hashed_password)
-    db.session.add(user)
-    db.session.commit()
-    return user
+# def create_user(username, password):
+#     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+#     user = User(username=username, password=hashed_password)
+#     db.session.add(user)
+#     db.session.commit()
+#     return user
 
 # @pytest.fixture
 # def client():
@@ -21,16 +21,23 @@ def create_user(username, password):
 #         with app.app_context():
 #             db.drop_all()
 
-# def test_register(client):
-#     # Simula um registro de usuário
-#     response = client.post('/register', data={
-#         'username': 'testuser',
-#         'password': 'password',
-#         'confirm_password': 'password'
-#     }, follow_redirects=True)
+
+       
+  
+
+def test_register(client):
+    # Simula um registro de usuário
+    response = client.post('/register', data={
+        'username': 'testuser',
+        'password': 'password',
+        'confirm_password': 'password'
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
     
-#     assert response.status_code == 200
-#     assert b'Account Created For' in response.data
+    # Verifica se a mensagem de sucesso está presente no conteúdo retornado
+    assert b'Account Created For testuser' in response.data
+
 
 # def test_login_logout(client):
 #     # Cria um usuário para testar login
