@@ -9,6 +9,7 @@ variables:
 stages:
   - build
   - test
+  - security_scan
   - deploy
 
 # Job de build da imagem Docker
@@ -20,9 +21,6 @@ build_job:
   script:
     - echo "Building Docker image..."
     - docker build -t frankstark/todo-flask .
-    # - docker images
-    # - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-    # - docker push frankstark/todo-flask:latest
   only:
     - main
 
@@ -44,6 +42,23 @@ test_job:
   only:
     - main
 
+# Job de análise de segurança com Bandit
+security_scan:
+  stage: security_scan
+  image: python:3.10-slim
+  before_script:
+    - echo "Setting up environment for security scan..."
+    - pip install bandit
+  script:
+    - echo "Running Bandit security scan..."
+    - bandit -r todo_project
+  artifacts:
+    paths:
+      - bandit-report.txt
+    expire_in: 1 week
+  only:
+    - main
+
 # Job de deploy
 deploy_job:
   stage: deploy
@@ -59,10 +74,8 @@ deploy_job:
         docker rm $PORT_CONTAINERS;
         sleep 5;
       fi
-    # - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   script:
     - echo "Deploying the app..."
     - docker run -d -p 5000:5000 frankstark/todo-flask:latest
   only:
     - main
- 
