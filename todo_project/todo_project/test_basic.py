@@ -14,8 +14,7 @@ def client():
             db.drop_all()
 
 @pytest.fixture
-def init_database():
-    db.create_all()
+def init_database(client):
     user = User(username='testuser', password=bcrypt.generate_password_hash('password').decode('utf-8'))
     db.session.add(user)
     db.session.commit()
@@ -47,6 +46,8 @@ def test_add_task(client, init_database):
         task_name='New Task'
     ), follow_redirects=True)
     assert b'Task Created' in response.data
+    task = Task.query.filter_by(name='New Task').first()
+    assert task is not None
 
 def test_update_task(client, init_database):
     client.post('/login', data=dict(
@@ -57,10 +58,13 @@ def test_update_task(client, init_database):
         task_name='Old Task'
     ), follow_redirects=True)
     task = Task.query.first()
+    assert task is not None
     response = client.post(f'/all_tasks/{task.id}/update_task', data=dict(
         task_name='Updated Task'
     ), follow_redirects=True)
     assert b'Task Updated' in response.data
+    updated_task = Task.query.get(task.id)
+    assert updated_task.name == 'Updated Task'
 
 def test_delete_task(client, init_database):
     client.post('/login', data=dict(
@@ -71,5 +75,8 @@ def test_delete_task(client, init_database):
         task_name='Task to be deleted'
     ), follow_redirects=True)
     task = Task.query.first()
+    assert task is not None
     response = client.get(f'/all_tasks/{task.id}/delete_task', follow_redirects=True)
     assert b'Task Deleted' in response.data
+    deleted_task = Task.query.get(task.id)
+    assert deleted_task is None
