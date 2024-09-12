@@ -18,7 +18,7 @@ def client(app_context):
 
 def test_about_page(client):
     with client:
-        response = client.get(url_for('about'))
+        response = client.get(url_for('/about'))
         assert response.status_code == 200
         assert b'About' in response.data
 
