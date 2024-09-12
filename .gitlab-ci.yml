@@ -25,7 +25,7 @@ build_job:
 # Job de testes
 test_job:
   stage: test
-  image: python:3.10
+  image: python:3.10-slim
   before_script:
     - echo "Setting up environment for tests..."
     - pip3 install -r requirements.txt
