@@ -28,8 +28,8 @@ test_job:
   image: python:3.10
   before_script:
     - echo "Setting up environment for tests..."
-    - pip install -r requirements.txt
-    - pip install pytest pytest-cov
+    - pip3 install -r requirements.txt
+    - pip3 install pytest pytest-cov
   script:
     - echo "Running Flask app tests..."
     - pytest --cov=todo_project --cov-report=xml
