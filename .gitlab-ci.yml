@@ -11,6 +11,7 @@ stages:
   - build
   - test
   - security_scan
+  - dependency_scan
   - deploy
 
 # Job de build da imagem Docker
@@ -56,6 +57,20 @@ security_scan:
   artifacts:
     paths:
       - bandit-report.txt
+    expire_in: 1 week
+  only:
+    - main
+
+# Job de análise de dependências com OWASP Dependency-Check
+dependency_scan:
+  stage: dependency_scan
+  image: owasp/dependency-check:latest
+  script:
+    - echo "Running OWASP Dependency-Check..."
+    - dependency-check --project "todo_project" --scan . --format "XML" --out dependency-check-report.xml --scan /path/to/requirements.txt
+  artifacts:
+    paths:
+      - dependency-check-report.xml
     expire_in: 1 week
   only:
     - main
