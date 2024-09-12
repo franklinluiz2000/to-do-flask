@@ -1,91 +1,64 @@
 import pytest
 from todo_project import app, db, bcrypt
 from todo_project.models import User, Task
+from flask import url_for
 
-# Helper function to create a user
-def create_user(username, password):
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-    user = User(username=username, password=hashed_password)
-    db.session.add(user)
-    db.session.commit()
-    return user
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    with app.test_client() as client:
+        with app.app_context():
+            db.create_all()
+        yield client
+        with app.app_context():
+            db.drop_all()
 
-# @pytest.fixture
-# def client():
-#     app.config['TESTING'] = True
-#     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'  # In-memory database
-#     with app.test_client() as client:
-#         with app.app_context():
-#             db.create_all()
-#         yield client
-#         with app.app_context():
-#             db.drop_all()
+def test_about_page(client):
+    response = client.get(url_for('about'))
+    assert response.status_code == 200
+    assert b'About' in response.data
 
+def test_register(client):
+    response = client.post(url_for('register'), data={
+        'username': 'testuser',
+        'password': 'password',
+        'confirm_password': 'password'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Account Created For testuser' in response.data
 
-       
-  
-
-# def test_register(client):
-#     # Simula um registro de usuário
-#     response = client.post('/register', data={
+# def test_login(client):
+#     # First, register a user
+#     client.post(url_for('register'), data={
 #         'username': 'testuser',
 #         'password': 'password',
 #         'confirm_password': 'password'
 #     }, follow_redirects=True)
-
+    
+#     # Then, log in with the same user
+#     response = client.post(url_for('login'), data={
+#         'username': 'testuser',
+#         'password': 'password'
+#     }, follow_redirects=True)
 #     assert response.status_code == 200
-    
-#     # Verifica se a mensagem de sucesso está presente no conteúdo retornado
-#     assert b'Account Created For testuser' in response.data
+#     assert b'Login Successfull' in response.data
 
-
-# def test_login_logout(client):
-#     # Cria um usuário para testar login
-#     user = create_user('testuser', 'password')
-    
-#     # Testa login
-#     response = client.post('/login', data={
+# def test_add_task(client):
+#     # First, register and log in a user
+#     client.post(url_for('register'), data={
+#         'username': 'testuser',
+#         'password': 'password',
+#         'confirm_password': 'password'
+#     }, follow_redirects=True)
+#     client.post(url_for('login'), data={
 #         'username': 'testuser',
 #         'password': 'password'
 #     }, follow_redirects=True)
     
-#     assert response.status_code == 200
-#     assert b'Login Successfull' in response.data
-    
-#     # Testa logout
-#     response = client.get('/logout', follow_redirects=True)
-#     assert b'Login' in response.data
-
-# def test_add_task(client):
-#     # Cria um usuário e faz login
-#     user = create_user('testuser', 'password')
-#     client.post('/login', data={'username': 'testuser', 'password': 'password'}, follow_redirects=True)
-    
-#     # Adiciona uma tarefa
-#     response = client.post('/add_task', data={'task_name': 'Task 1'}, follow_redirects=True)
-    
+#     # Then, add a task
+#     response = client.post(url_for('add_task'), data={
+#         'task_name': 'Test Task'
+#     }, follow_redirects=True)
 #     assert response.status_code == 200
 #     assert b'Task Created' in response.data
-    
-#     # Verifica se a tarefa foi criada no banco de dados
-#     task = Task.query.filter_by(content='Task 1').first()
-#     assert task is not None
-#     assert task.author == user
-
-# def test_update_task(client):
-#     # Cria um usuário, faz login e adiciona uma tarefa
-#     user = create_user('testuser', 'password')
-#     client.post('/login', data={'username': 'testuser', 'password': 'password'}, follow_redirects=True)
-#     task = Task(content='Initial Task', author=user)
-#     db.session.add(task)
-#     db.session.commit()
-    
-#     # Atualiza a tarefa
-#     response = client.post(f'/all_tasks/{task.id}/update_task', data={'task_name': 'Updated Task'}, follow_redirects=True)
-    
-#     assert response.status_code == 200
-#     assert b'Task Updated' in response.data
-    
-#     # Verifica se a tarefa foi atualizada no banco de dados
-#     updated_task = Task.query.get(task.id)
-#     assert updated_task.content == 'Updated Task'
