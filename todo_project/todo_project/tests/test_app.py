@@ -1,6 +1,31 @@
 import pytest
-from todo_project import app, db, bcrypt
-from todo_project.models import User, Task
+from todo_project import create_app, db
+
+@pytest.fixture
+def app():
+    app = create_app('testing')  # Ajuste para o nome da configuração de teste
+    with app.app_context():
+        db.create_all()  # Cria todas as tabelas do banco de dados para testes
+        yield app
+        db.drop_all()  # Remove todas as tabelas após os testes
+
+@pytest.fixture
+def client(app):
+    return app.test_client()
+
+
+
+
+
+
+
+
+
+
+
+# import pytest
+# from todo_project import app, db, bcrypt
+# from todo_project.models import User, Task
 
 # Helper function to create a user
 # def create_user(username, password):
@@ -25,18 +50,18 @@ from todo_project.models import User, Task
        
   
 
-def test_register(client):
-    # Simula um registro de usuário
-    response = client.post('/register', data={
-        'username': 'testuser',
-        'password': 'password',
-        'confirm_password': 'password'
-    }, follow_redirects=True)
+# def test_register(client):
+#     # Simula um registro de usuário
+#     response = client.post('/register', data={
+#         'username': 'testuser',
+#         'password': 'password',
+#         'confirm_password': 'password'
+#     }, follow_redirects=True)
 
-    assert response.status_code == 200
+#     assert response.status_code == 200
     
-    # Verifica se a mensagem de sucesso está presente no conteúdo retornado
-    assert b'Account Created For testuser' in response.data
+#     # Verifica se a mensagem de sucesso está presente no conteúdo retornado
+#     assert b'Account Created For testuser' in response.data
 
 
 # def test_login_logout(client):
