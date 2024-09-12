@@ -57,6 +57,6 @@ deploy_job:
       fi
   script:
     - echo "Deploying the app..."
-    - docker run -d -p 5000:5000 frankstark/todo-flask
+    - docker run -d -p 5000:5000 frankstark/todo-flask:latest
   only:
     - main
