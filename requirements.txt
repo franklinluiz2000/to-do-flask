@@ -7,3 +7,5 @@ WTForms==3.0.1
 Jinja2==3.1.4
 Werkzeug==2.3.3
 SQLAlchemy==1.4.47
+pytest
+Flask-Testing
