@@ -19,6 +19,7 @@ build_job:
   script:
     - echo "Building Docker image..."
     - docker build -t frankstark/todo-flask .
+    - docker images
   only:
     - main
 
