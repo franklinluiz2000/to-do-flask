@@ -60,3 +60,5 @@ deploy_job:
     - docker run -d -p 5000:5000 frankstark/todo-flask:latest
   only:
     - main
+  dependencies:
+    - build_job
