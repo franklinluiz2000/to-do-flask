@@ -15,50 +15,54 @@ def client():
             db.drop_all()
 
 def test_about_page(client):
-    response = client.get(url_for('about'))
-    assert response.status_code == 200
-    assert b'About' in response.data
+    with app.app_context():
+        response = client.get(url_for('about'))
+        assert response.status_code == 200
+        assert b'About' in response.data
 
 def test_register(client):
-    response = client.post(url_for('register'), data={
-        'username': 'testuser',
-        'password': 'password',
-        'confirm_password': 'password'
-    }, follow_redirects=True)
-    assert response.status_code == 200
-    assert b'Account Created For testuser' in response.data
+    with app.app_context():
+        response = client.post(url_for('register'), data={
+            'username': 'testuser',
+            'password': 'password',
+            'confirm_password': 'password'
+        }, follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Account Created For testuser' in response.data
 
-# def test_login(client):
-#     # First, register a user
-#     client.post(url_for('register'), data={
-#         'username': 'testuser',
-#         'password': 'password',
-#         'confirm_password': 'password'
-#     }, follow_redirects=True)
-    
-#     # Then, log in with the same user
-#     response = client.post(url_for('login'), data={
-#         'username': 'testuser',
-#         'password': 'password'
-#     }, follow_redirects=True)
-#     assert response.status_code == 200
-#     assert b'Login Successfull' in response.data
+def test_login(client):
+    with app.app_context():
+        # First, register a user
+        client.post(url_for('register'), data={
+            'username': 'testuser',
+            'password': 'password',
+            'confirm_password': 'password'
+        }, follow_redirects=True)
+        
+        # Then, log in with the same user
+        response = client.post(url_for('login'), data={
+            'username': 'testuser',
+            'password': 'password'
+        }, follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Login Successfull' in response.data
 
-# def test_add_task(client):
-#     # First, register and log in a user
-#     client.post(url_for('register'), data={
-#         'username': 'testuser',
-#         'password': 'password',
-#         'confirm_password': 'password'
-#     }, follow_redirects=True)
-#     client.post(url_for('login'), data={
-#         'username': 'testuser',
-#         'password': 'password'
-#     }, follow_redirects=True)
-    
-#     # Then, add a task
-#     response = client.post(url_for('add_task'), data={
-#         'task_name': 'Test Task'
-#     }, follow_redirects=True)
-#     assert response.status_code == 200
-#     assert b'Task Created' in response.data
+def test_add_task(client):
+    with app.app_context():
+        # First, register and log in a user
+        client.post(url_for('register'), data={
+            'username': 'testuser',
+            'password': 'password',
+            'confirm_password': 'password'
+        }, follow_redirects=True)
+        client.post(url_for('login'), data={
+            'username': 'testuser',
+            'password': 'password'
+        }, follow_redirects=True)
+        
+        # Then, add a task
+        response = client.post(url_for('add_task'), data={
+            'task_name': 'Test Task'
+        }, follow_redirects=True)
+        assert response.status_code == 200
+        assert b'Task Created' in response.data
