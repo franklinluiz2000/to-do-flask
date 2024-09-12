@@ -3,17 +3,27 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 
+db = SQLAlchemy()
+login_manager = LoginManager()
+bcrypt = Bcrypt()
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = '45cf93c4d41348cd9980674ade9a7356'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-db = SQLAlchemy(app)
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'login' 
+login_manager.login_view = 'login'
 login_manager.login_message_category = 'danger'
 
-bcrypt = Bcrypt(app)
+def create_app(config_class=None):
+    app = Flask(__name__)
 
-# Always put Routes at end
-from todo_project import routes
+    # Configuração da aplicação
+    app.config['SECRET_KEY'] = '45cf93c4d41348cd9980674ade9a7356'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+
+    # Inicializar as extensões
+    db.init_app(app)
+    login_manager.init_app(app)
+    bcrypt.init_app(app)
+
+    # Registrar rotas
+    from todo_project import routes
+    app.register_blueprint(routes.bp)  # Certifique-se de que as rotas estão em um blueprint
+
+    return app

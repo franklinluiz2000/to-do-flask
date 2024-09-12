@@ -12,13 +12,15 @@ from todo_project.models import User, Task
 
 @pytest.fixture(scope='module')
 def test_client():
-    app = create_app('testing')
+    app = create_app()  # Agora você pode criar a aplicação aqui
+    app.config['TESTING'] = True
     with app.test_client() as testing_client:
         with app.app_context():
-            db.create_all()
+            db.create_all()  # Cria o banco de dados para os testes
         yield testing_client
         with app.app_context():
-            db.drop_all()
+            db.drop_all()  # Remove o banco de dados após os testes
+
 
 # @pytest.fixture(scope='module')
 # def init_database():

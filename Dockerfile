@@ -17,4 +17,5 @@ COPY . .
 EXPOSE 5000
 
 # Comando para iniciar a aplicação
-CMD ["python", "todo_project/run.py"]
+CMD ["flask", "run", "--host=0.0.0.0"]
+ENV FLASK_APP=todo_project/run.py

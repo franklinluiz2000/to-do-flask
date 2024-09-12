@@ -4,6 +4,7 @@ variables:
   COMPOSE_HTTP_TIMEOUT: 600
   DOCKER_BUILDKIT: 0
   COMPOSE_DOCKER_CLI_BUILD: 0
+  PYTHONPATH: "$CI_PROJECT_DIR/todo_project"
 
 stages:
   - build
