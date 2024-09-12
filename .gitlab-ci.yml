@@ -20,6 +20,7 @@ build_job:
     - echo "Building Docker image..."
     - docker build -t frankstark/todo-flask .
     - docker images
+    - docker push frankstark/todo-flask:latest
   only:
     - main
 
@@ -56,6 +57,7 @@ deploy_job:
         docker rm $PORT_CONTAINERS;
         sleep 5;
       fi
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   script:
     - echo "Deploying the app..."
     - docker run -d -p 5000:5000 frankstark/todo-flask:latest
