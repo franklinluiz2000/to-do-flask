@@ -1,57 +1,104 @@
-from django import db
-from todo_project.todo_project.models import Task, User
+import pytest
+from flask import Flask, url_for
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+from todo_project import create_app, db
+from todo_project.models import User, Task
 
+@pytest.fixture(scope='module')
+def test_client():
+    app = create_app('testing')
+    with app.test_client() as testing_client:
+        with app.app_context():
+            db.create_all()
+        yield testing_client
+        with app.app_context():
+            db.drop_all()
 
-def test_user_repr():
-    user = User(username='testuser', password='password')
-    assert repr(user) == "User('testuser')"
+@pytest.fixture(scope='module')
+def init_database():
+    db.create_all()
+    yield db
+    db.drop_all()
 
-def test_task_repr():
-    task = Task(content='Test Task', user_id=1)
-    assert repr(task) == f"Task('Test Task', '{task.date_posted}', '1')"
-
-def test_create_user_and_task(client):
-    # Criar um usuário
-    user = User(username='testuser', password='password')
+def test_user_model(init_database):
+    user = User(username='testuser', password=generate_password_hash('password'))
     db.session.add(user)
     db.session.commit()
-    
-    # Verificar se o usuário foi criado
-    assert User.query.filter_by(username='testuser').first() is not None
+    assert user.username == 'testuser'
+    assert check_password_hash(user.password, 'password')
 
-    # Criar uma tarefa para o usuário
-    task = Task(content='Test Task', user_id=user.id)
-    db.session.add(task)
-    db.session.commit()
-    
-    # Verificar se a tarefa foi criada
-    assert Task.query.filter_by(content='Test Task').first() is not None
-
-def test_user_tasks_relationship():
-    user = User(username='testuser', password='password')
-    task1 = Task(content='Test Task 1', user_id=user.id)
-    task2 = Task(content='Test Task 2', user_id=user.id)
-    db.session.add(user)
-    db.session.add(task1)
-    db.session.add(task2)
-    db.session.commit()
-    
-    assert len(user.tasks) == 2
-    assert task1 in user.tasks
-    assert task2 in user.tasks
-
-def test_register(client):
-    response = client.post('/register', data=dict(
+def test_register(test_client):
+    response = test_client.post('/register', data=dict(
         username='newuser',
         password='newpassword',
         confirm_password='newpassword'
     ), follow_redirects=True)
-    assert b'Account Created For newuser' in response.data
+    assert b'Account Created For' in response.data
 
-def test_login(client):
-    User(username='testuser', password=generate_password_hash('password')).save()  # type: ignore # Crie um usuário para teste
-    response = client.post('/login', data=dict(
+def test_login(test_client, init_database):
+    user = User(username='testuser', password=generate_password_hash('password'))
+    db.session.add(user)
+    db.session.commit()
+    response = test_client.post('/login', data=dict(
         username='testuser',
         password='password'
     ), follow_redirects=True)
-    assert b'Login Successfull' in response.data
+    assert b'Login Successful' in response.data
+
+def test_add_task(test_client, init_database):
+    user = User(username='testuser', password=generate_password_hash('password'))
+    db.session.add(user)
+    db.session.commit()
+    test_client.post('/login', data=dict(
+        username='testuser',
+        password='password'
+    ), follow_redirects=True)
+    response = test_client.post('/add_task', data=dict(
+        task_name='New Task'
+    ), follow_redirects=True)
+    assert b'Task Created' in response.data
+
+def test_update_task(test_client, init_database):
+    user = User(username='testuser', password=generate_password_hash('password'))
+    db.session.add(user)
+    db.session.commit()
+    test_client.post('/login', data=dict(
+        username='testuser',
+        password='password'
+    ), follow_redirects=True)
+    test_client.post('/add_task', data=dict(
+        task_name='Old Task'
+    ), follow_redirects=True)
+    task = Task.query.first()
+    response = test_client.post(f'/all_tasks/{task.id}/update_task', data=dict(
+        task_name='Updated Task'
+    ), follow_redirects=True)
+    assert b'Task Updated' in response.data
+
+def test_delete_task(test_client, init_database):
+    user = User(username='testuser', password=generate_password_hash('password'))
+    db.session.add(user)
+    db.session.commit()
+    test_client.post('/login', data=dict(
+        username='testuser',
+        password='password'
+    ), follow_redirects=True)
+    test_client.post('/add_task', data=dict(
+        task_name='Task to be deleted'
+    ), follow_redirects=True)
+    task = Task.query.first()
+    response = test_client.get(f'/all_tasks/{task.id}/delete_task', follow_redirects=True)
+    assert b'Task Deleted' in response.data
+
+def test_account_page(test_client, init_database):
+    user = User(username='testuser', password=generate_password_hash('password'))
+    db.session.add(user)
+    db.session.commit()
+    test_client.post('/login', data=dict(
+        username='testuser',
+        password='password'
+    ), follow_redirects=True)
+    response = test_client.get('/account')
+    assert response.status_code == 200
