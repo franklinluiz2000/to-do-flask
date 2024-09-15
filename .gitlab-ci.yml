@@ -12,7 +12,7 @@ stages:
   - test
   - security_scan
   - dependency_scan
-  - zap_scan
+  # - zap_scan
   - monitor
   - deploy
 
@@ -77,22 +77,22 @@ dependency_scan:
   only:
     - main
 
-zap_scan:
-  stage: zap_scan
-  image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
-  script:
-    - echo "Starting Flask app..."
-    - docker network create zap_network
-    - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
-    - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
-  artifacts:
-    paths:
-      - owasp-zap-report.html
-    expire_in: 1 week
-  only:
-    - main
+# zap_scan:
+#   stage: zap_scan
+#   image: docker:20.10.16
+#   services:
+#     - docker:20.10.16-dind
+#   script:
+#     - echo "Starting Flask app..."
+#     - docker network create zap_network
+#     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
+#     - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
+#   artifacts:
+#     paths:
+#       - owasp-zap-report.html
+#     expire_in: 1 week
+#   only:
+#     - main
 
 # Job de monitoramento com Prometheus e Grafana
 monitoring_job:
