@@ -12,7 +12,8 @@ stages:
   - test
   - security_scan
   - dependency_scan
-  # - zap_scan
+  - zap_scan
+  - monitor
   - deploy
 
 # Job de build da imagem Docker
@@ -54,7 +55,7 @@ security_scan:
     - pip install bandit
   script:
     - echo "Running Bandit security scan..."
-    - bandit -r todo_project --severity-level high  # Somente falhar em vulnerabilidades de alta gravidade
+    - bandit -r todo_project --severity-level high
   artifacts:
     paths:
       - bandit-report.txt
@@ -76,23 +77,54 @@ dependency_scan:
   only:
     - main
 
-# zap_scan:
-#   stage: zap_scan
-#   image: docker:20.10.16
-#   services:
-#     - docker:20.10.16-dind
-#   script:
-#     - echo "Starting Flask app..."
-#     - docker network create zap_network
-#     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
-#     - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
-#   artifacts:
-#     paths:
-#       - owasp-zap-report.html
-#     expire_in: 1 week
-#   only:
-#     - main
+zap_scan:
+  stage: zap_scan
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - echo "Starting Flask app..."
+    - docker network create zap_network
+    - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
+    - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
+  artifacts:
+    paths:
+      - owasp-zap-report.html
+    expire_in: 1 week
+  only:
+    - main
 
+# Job de monitoramento com Prometheus e Grafana
+monitoring_job:
+  stage: monitor
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  before_script:
+    - echo "Starting Prometheus and Grafana..."
+    - docker network create monitor_network
+  script:
+    # Start Prometheus
+    - docker run -d --name prometheus --network monitor_network -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest
+    # Start Grafana
+    - docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
+    - sleep 10
+     # Add data source to Grafana (Prometheus as the data source)
+    - curl -X POST -H "Content-Type: application/json" \
+      -d '{
+            "name":"Prometheus",
+            "type":"prometheus",
+            "url":"http://prometheus:9090",
+            "access":"proxy",
+            "basicAuth":false
+          }' \
+      http://admin:admin@grafana:3000/api/datasources
+  only:
+    - main
+
+
+  only:
+    - main
 
 # Job de deploy
 deploy_job:

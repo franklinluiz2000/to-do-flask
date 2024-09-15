@@ -1,15 +1,39 @@
-version: '3.8'
-
+version: '3.9'
 services:
-  web:
+  flask-app:
     build:
-      context: ./
-      dockerfile: Dockerfile
-    image: frankstark/todo-flask
-    container_name: todo-flask
+      context: .
+    container_name: flask-app
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
     environment:
-      - FLASK_ENV=development
+      - FLASK_APP=todo_project/run.py
+    networks:
+      - monitor-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitor-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    networks:
+      - monitor-net
+    volumes:
+      - grafana-storage:/var/lib/grafana
+
+networks:
+  monitor-net:
+    driver: bridge
+
+volumes:
+  grafana-storage:

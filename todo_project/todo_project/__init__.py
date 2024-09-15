@@ -7,6 +7,9 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.serving import WSGIRequestHandler
 from flask_session import Session  # Para gerenciamento de sessões
 
+from prometheus_flask_exporter import PrometheusMetrics
+from flask import Flask
+
 app = Flask(__name__)
 
 # Adcionando segurança
@@ -58,6 +61,18 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 # Isso ajuda a remover o 'Server' nas respostas HTTP
 WSGIRequestHandler.server_version = ""
 WSGIRequestHandler.sys_version = ""
+
+
+# Inicializa o Prometheus Metrics
+metrics = PrometheusMetrics(app)
+
+# # Contador de requisições HTTP por status
+# metrics.info('app_info', 'Aplicação Flask info', version='1.0.0')
+
+# # Latência das requisições HTTP e contagem
+# @app.route('/metrics-test')
+# def test_metrics():
+#     return "Metrics are being collected."
 
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
