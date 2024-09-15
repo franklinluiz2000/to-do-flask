@@ -109,20 +109,6 @@ monitoring_job:
     # Start Grafana
     - docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
     - sleep 10
-     # Add data source to Grafana (Prometheus as the data source)
-    - curl -X POST -H "Content-Type: application/json" \
-      -d '{
-            "name":"Prometheus",
-            "type":"prometheus",
-            "url":"http://prometheus:9090",
-            "access":"proxy",
-            "basicAuth":false
-          }' \
-      http://admin:admin@grafana:3000/api/datasources
-  only:
-    - main
-
-
   only:
     - main
 
