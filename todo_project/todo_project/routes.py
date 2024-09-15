@@ -12,6 +12,12 @@ from todo_project.models import User, Task
 # Import 
 from flask_login import login_required, current_user, login_user, logout_user
 
+import bleach
+
+def is_safe_url(target):
+    ref_url = urlparse(request.host_url)
+    test_url = urlparse(urljoin(request.host_url, target))
+    return test_url.scheme in ('http', 'https') and ref_url.netloc == test_url.netloc
 
 @app.errorhandler(404)
 def error_404(error):
@@ -25,7 +31,6 @@ def error_403(error):
 def error_500(error):
     return (render_template('errors/500.html'), 500)
 
-
 @app.route("/")
 @app.route("/about")
 def about():
@@ -38,20 +43,23 @@ def login():
         return redirect(url_for('all_tasks'))
 
     form = LoginForm()
-    # After you submit the form
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        # Check if the user exists and the password is valid
+        # Escape username input
+        username = bleach.clean(form.username.data)
+        user = User.query.filter_by(username=username).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user)
-            task_form = TaskForm()
-            flash('Login Successfull', 'success')
-            return redirect(url_for('all_tasks'))
+            flash('Login Successful', 'success')
+
+            next_page = request.args.get('next')
+            if next_page and is_safe_url(next_page):
+                return redirect(next_page)
+            else:
+                return redirect(url_for('all_tasks'))
         else:
             flash('Login Unsuccessful. Please check Username Or Password', 'danger')
-    
+
     return render_template('login.html', title='Login', form=form)
-    
 
 @app.route("/logout")
 def logout():
@@ -66,11 +74,12 @@ def register():
 
     form = RegistrationForm()
     if form.validate_on_submit():
+        username = bleach.clean(form.username.data)
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, password=hashed_password)
+        user = User(username=username, password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash(f'Account Created For {form.username.data}', 'success')
+        flash(f'Account Created For {username}', 'success')
         return redirect(url_for('login'))
 
     return render_template('register.html', title='Register', form=form)
@@ -130,8 +139,9 @@ def delete_task(task_id):
 def account():
     form = UpdateUserInfoForm()
     if form.validate_on_submit():
-        if form.username.data != current_user.username:  
-            current_user.username = form.username.data
+        username = bleach.clean(form.username.data)
+        if username != current_user.username:  
+            current_user.username = username
             db.session.commit()
             flash('Username Updated Successfully', 'success')
             return redirect(url_for('account'))

@@ -11,6 +11,8 @@ from todo_project.models import User
 
 from flask_login import current_user
 
+import bleach
+
 
 class RegistrationForm(FlaskForm):
     username = StringField(label='Username', validators=[DataRequired(), Length(min=3, max=10)])
@@ -30,6 +32,9 @@ class LoginForm(FlaskForm):
     password = PasswordField(label='Password', validators=[DataRequired()])
     submit = SubmitField(label='Login')
 
+    # Adicionando segurança
+    def validate_username(self, username):
+        username.data = bleach.clean(username.data)
 
 class UpdateUserInfoForm(FlaskForm):
     username = StringField(label='Username', validators=[DataRequired(), Length(min=3, max=10)])
