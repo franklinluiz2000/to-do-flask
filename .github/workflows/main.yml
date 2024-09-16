@@ -93,12 +93,27 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Start Prometheus and Grafana
         run: |
+          # Cria a rede do Docker
           docker network create monitor_network
+          
+          # Verifica se o arquivo prometheus.yml existe
+          if [ ! -f prometheus.yml ]; then
+            echo "Arquivo prometheus.yml não encontrado!"
+            exit 1
+          fi
+
+          # Inicia o container do Prometheus
           docker run -d --name prometheus --network monitor_network -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest
+
+          # Inicia o container do Grafana
           docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
     timeout-minutes: 10
+
 
   # Job de deploy
   deploy:
