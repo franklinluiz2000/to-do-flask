@@ -37,10 +37,7 @@ jobs:
         run: |
           pytest --cov=todo_project --cov-report=xml
         continue-on-error: true
-    artifacts:
-      paths:
-        - coverage.xml
-
+  
   # Job de análise de segurança com Bandit
   security_scan:
     runs-on: ubuntu-latest
@@ -57,9 +54,6 @@ jobs:
       - name: Run Bandit security scan
         run: |
           bandit -r todo_project --severity-level high
-    artifacts:
-      paths:
-        - bandit-report.txt
 
   # Job de análise de dependências com OWASP Dependency-Check
   dependency_scan:
@@ -74,9 +68,7 @@ jobs:
       - name: Run OWASP Dependency-Check
         run: |
           dependency-check.sh --project "todo_project" --scan . --format "XML" --out dependency-check-report.xml
-    artifacts:
-      paths:
-        - dependency-check-report.xml
+
 
   # Job de análise de segurança com OWASP ZAP
   zap_scan:
@@ -92,9 +84,7 @@ jobs:
       - name: Run ZAP scan
         run: |
           docker run --network zap_network -v $(pwd):/zap/wrk owasp/zap2docker-stable zap-baseline.py -t http://flask-app:5000 -r /zap/wrk/zap-report.html
-    artifacts:
-      paths:
-        - zap-report.html
+
 
   # Job de monitoramento com Prometheus e Grafana
   monitoring:
