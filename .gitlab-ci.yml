@@ -13,8 +13,9 @@ stages:
   - security_scan
   - dependency_scan
   - zap_scan  
-  - deploy
   - monitor
+  - deploy
+  
 
 # Job de build da imagem Docker
 build_job:
@@ -117,7 +118,7 @@ zap_scan:
     paths:
       - zap_report.pdf
   only:
-  - maina
+  - main
 
 # Job de deploy
 deploy_job:
