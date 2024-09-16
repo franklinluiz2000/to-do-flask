@@ -154,7 +154,6 @@ monitoring_job:
     - docker:20.10.16-dind
   needs:
     - build_job
-    - deploy
   before_script:
     - echo "Starting Prometheus and Grafana..."
     - docker network create monitor_network
