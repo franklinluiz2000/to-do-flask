@@ -12,10 +12,9 @@ stages:
   - test
   - security_scan
   - dependency_scan
-  - zap_scan  
-  - monitor
+  - zap_scan
   - deploy
-  
+  - monitor
 
 # Job de build da imagem Docker
 build_job:
@@ -46,6 +45,8 @@ test_job:
     expire_in: 1 week
   only:
     - main
+  needs:
+    - build_job
 
 # Job de análise de segurança com Bandit
 security_scan:
@@ -63,6 +64,8 @@ security_scan:
     expire_in: 1 week
   only:
     - main
+  needs:
+    - build_job
 
 # Job de análise de dependências com OWASP Dependency-Check
 dependency_scan:
@@ -77,32 +80,13 @@ dependency_scan:
     expire_in: 1 week
   only:
     - main
+  needs:
+    - build_job
 
-# # Job de análise de segurança com ZAP
-# zap_scan:
-#   stage: zap_scan
-#   image: docker:20.10.16
-#   services:
-#     - docker:20.10.16-dind
-#   needs:
-#     - build_job
-#   script:
-#     - echo "Starting Flask app..."
-#     - docker network create zap_network
-#     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
-#     # - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
-#   artifacts:
-#     paths:
-#       - owasp-zap-report.html
-#     expire_in: 1 week
-#   only:
-#     - main
-
+# Job de análise de segurança com ZAP
 zap_scan:
   stage: zap_scan
   image: maven:3.8.5-openjdk-11-slim
-  # variables:
-  #   DAST_TARGET_URL: 'http://192.168.98.10:8081/'
   script:
     - apt-get update
     - apt-get -y install wget
@@ -111,6 +95,7 @@ zap_scan:
     - mkdir zap
     - tar -xvf ZAP_2.15.0_Linux.tar.gz
     - cd ZAP_2.15.0
+    - docker network create zap_network
     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
     - ./zap.sh -cmd --network zap_network -t http://flask-app:5000 -quickprogress -quickout ../zap_report.html
     - cd ..
@@ -119,7 +104,12 @@ zap_scan:
     paths:
       - zap_report.pdf
   only:
-  - main
+    - main
+  needs:
+    - build_job
+    - test_job
+    - security_scan
+    - dependency_scan
 
 # Job de deploy
 deploy_job:
@@ -132,7 +122,7 @@ deploy_job:
     - test_job
     - security_scan
     - dependency_scan
-    - zap_scan    
+    - zap_scan
   before_script:
     - echo "Stopping previous container if exists..."
     - PORT_CONTAINERS=$(docker ps --filter "publish=5000" -q)
@@ -155,7 +145,7 @@ monitoring_job:
   services:
     - docker:20.10.16-dind
   needs:
-    - build_job
+    - deploy_job
   before_script:
     - echo "Starting Prometheus and Grafana..."
     - docker network create monitor_network
