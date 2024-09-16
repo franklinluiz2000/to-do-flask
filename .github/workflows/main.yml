@@ -67,8 +67,8 @@ jobs:
 
       - name: Run OWASP Dependency-Check
         run: |
-          docker run --rm -v $(pwd):/src -v $(pwd)/dependency-check-data:/root/.dependency-check owasp/dependency-check --project "todo_project" --scan /src --format "XML" --out /src/dependency-check-report.xml
-        
+          dependency-check --project "todo_project" --scan . --format "XML" --out dependency-check-report.xml --scan /path/to/requirements.txt        
+  
   # Job de análise de segurança com OWASP ZAP
   zap_scan:
     runs-on: ubuntu-latest
