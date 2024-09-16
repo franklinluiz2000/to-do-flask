@@ -12,9 +12,9 @@ stages:
   - test
   - security_scan
   - dependency_scan
-  - zap_scan
-  - monitor
+  - zap_scan  
   - deploy
+  - monitor
 
 # Job de build da imagem Docker
 build_job:
@@ -77,45 +77,47 @@ dependency_scan:
   only:
     - main
 
-# Job de análise de segurança com ZAP
+# # Job de análise de segurança com ZAP
+# zap_scan:
+#   stage: zap_scan
+#   image: docker:20.10.16
+#   services:
+#     - docker:20.10.16-dind
+#   needs:
+#     - build_job
+#   script:
+#     - echo "Starting Flask app..."
+#     - docker network create zap_network
+#     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
+#     # - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
+#   artifacts:
+#     paths:
+#       - owasp-zap-report.html
+#     expire_in: 1 week
+#   only:
+#     - main
+
 zap_scan:
   stage: zap_scan
-  image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
-  needs:
-    - build_job
+  image: maven:3.8.5-openjdk-11-slim
+  variables:
+    DAST_TARGET_URL: 'http://192.168.98.10:8081/'
   script:
-    - echo "Starting Flask app..."
-    - docker network create zap_network
-    - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
-    # - docker run --network zap_network -v $(pwd):/zap/wrk ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf    
+    - apt-get update
+    - apt-get -y install wget
+    - apt-get -y install wkhtmltopdf
+    - wget https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
+    - mkdir zap
+    - tar -xvf ZAP_2.15.0_Linux.tar.gz
+    - cd ZAP_2.15.0
+    - ./zap.sh -cmd -quickurl $DAST_TARGET_URL -quickprogress -quickout ../zap_report.html
+    - cd ..
+    - wkhtmltopdf zap_report.html zap_report.pdf
   artifacts:
     paths:
-      - owasp-zap-report.html
-    expire_in: 1 week
+      - zap_report.pdf
   only:
-    - main
-
-# Job de monitoramento com Prometheus e Grafana
-monitoring_job:
-  stage: monitor
-  image: docker:20.10.16
-  services:
-    - docker:20.10.16-dind
-  needs:
-    - build_job
-  before_script:
-    - echo "Starting Prometheus and Grafana..."
-    - docker network create monitor_network
-  script:
-    # Start Prometheus
-    - docker run -d --name prometheus --network monitor_network -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest
-    # Start Grafana
-    - docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
-    - sleep 10    
-  only:
-    - main
+  - maina
 
 # Job de deploy
 deploy_job:
@@ -128,8 +130,7 @@ deploy_job:
     - test_job
     - security_scan
     - dependency_scan
-    - zap_scan
-    - monitoring_job
+    - zap_scan    
   before_script:
     - echo "Stopping previous container if exists..."
     - PORT_CONTAINERS=$(docker ps --filter "publish=5000" -q)
@@ -142,5 +143,26 @@ deploy_job:
   script:
     - echo "Deploying the app..."
     - docker run -d -p 5000:5000 frankstark/todo-flask:latest
+  only:
+    - main
+
+# Job de monitoramento com Prometheus e Grafana
+monitoring_job:
+  stage: monitor
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  needs:
+    - build_job
+    - deploy
+  before_script:
+    - echo "Starting Prometheus and Grafana..."
+    - docker network create monitor_network
+  script:
+    # Start Prometheus
+    - docker run -d --name prometheus --network monitor_network -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest
+    # Start Grafana
+    - docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
+    - sleep 10    
   only:
     - main
