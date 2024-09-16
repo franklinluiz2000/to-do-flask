@@ -77,11 +77,14 @@ dependency_scan:
   only:
     - main
 
+# Job de análise de segurança com ZAP
 zap_scan:
   stage: zap_scan
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
+  needs:
+    - build_job
   script:
     - echo "Starting Flask app..."
     - docker network create zap_network
@@ -100,6 +103,8 @@ monitoring_job:
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
+  needs:
+    - build_job
   before_script:
     - echo "Starting Prometheus and Grafana..."
     - docker network create monitor_network
@@ -118,6 +123,13 @@ deploy_job:
   image: docker:20.10.16
   services:
     - docker:20.10.16-dind
+  needs:
+    - build_job
+    - test_job
+    - security_scan
+    - dependency_scan
+    - zap_scan
+    - monitoring_job
   before_script:
     - echo "Stopping previous container if exists..."
     - PORT_CONTAINERS=$(docker ps --filter "publish=5000" -q)
