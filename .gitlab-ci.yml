@@ -101,8 +101,8 @@ dependency_scan:
 zap_scan:
   stage: zap_scan
   image: maven:3.8.5-openjdk-11-slim
-  variables:
-    DAST_TARGET_URL: 'http://192.168.98.10:8081/'
+  # variables:
+  #   DAST_TARGET_URL: 'http://192.168.98.10:8081/'
   script:
     - apt-get update
     - apt-get -y install wget
@@ -111,7 +111,8 @@ zap_scan:
     - mkdir zap
     - tar -xvf ZAP_2.15.0_Linux.tar.gz
     - cd ZAP_2.15.0
-    - ./zap.sh -cmd -quickurl $DAST_TARGET_URL -quickprogress -quickout ../zap_report.html
+    - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
+    - ./zap.sh -cmd --network zap_network -t http://flask-app:5000 -quickprogress -quickout ../zap_report.html
     - cd ..
     - wkhtmltopdf zap_report.html zap_report.pdf
   artifacts:
