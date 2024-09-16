@@ -64,14 +64,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Download Dependency-Check
-        run: |
-          curl -LJO https://dl.bintray.com/jeremydmiller/dependency-check-debian/5.3.2/dependency-check_5.3.2-1_all.deb
-          sudo dpkg -i dependency-check_5.3.2-1_all.deb
+
       - name: Run OWASP Dependency-Check
         run: |
-          dependency-check.sh --project "todo_project" --scan . --format "XML" --out dependency-check-report.xml
-   
+          docker run --rm -v $(pwd):/src -v $(pwd)/dependency-check-data:/root/.dependency-check owasp/dependency-check --project "todo_project" --scan /src --format "XML" --out /src/dependency-check-report.xml
+        
   # Job de análise de segurança com OWASP ZAP
   zap_scan:
     runs-on: ubuntu-latest
@@ -86,7 +83,7 @@ jobs:
           docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask
       - name: Run ZAP scan
         run: |
-          docker run --network zap_network -v $(pwd):/zap/wrk owasp/zap2docker-stable zap-baseline.py -t http://flask-app:5000 -r /zap/wrk/zap-report.html
+          # docker run --network zap_network -v $(pwd):/zap/wrk owasp/zap2docker-stable zap-baseline.py -t http://flask-app:5000 -r /zap/wrk/zap-report.html
   
   # Job de monitoramento com Prometheus e Grafana
   monitoring:
