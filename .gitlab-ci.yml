@@ -107,10 +107,7 @@ zap_scan:
     - main
   needs:
     - build_job
-    - test_job
-    - security_scan
-    - dependency_scan
-
+    
 # Job de deploy
 deploy_job:
   stage: deploy
