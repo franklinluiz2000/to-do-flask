@@ -66,13 +66,13 @@ WSGIRequestHandler.sys_version = ""
 # Inicializa o Prometheus Metrics
 metrics = PrometheusMetrics(app)
 
-# # Contador de requisições HTTP por status
-# metrics.info('app_info', 'Aplicação Flask info', version='1.0.0')
+# Contador de requisições HTTP por status
+metrics.info('app_info', 'Aplicação Flask info', version='1.0.0')
 
-# # Latência das requisições HTTP e contagem
-# @app.route('/metrics-test')
-# def test_metrics():
-#     return "Metrics are being collected."
+# Latência das requisições HTTP e contagem
+@app.route('/metrics-test')
+def test_metrics():
+    return "Metrics are being collected."
 
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')

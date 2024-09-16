@@ -1,0 +1,121 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  # Job de build da imagem Docker
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build Docker image
+        run: |
+          docker build -t frankstark/todo-flask .
+        env:
+          DOCKER_BUILDKIT: 0
+          DOCKER_TLS_CERTDIR: /certs
+
+  # Job de testes
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+      - name: Run tests
+        run: |
+          pytest --cov=todo_project --cov-report=xml
+        continue-on-error: true
+    artifacts:
+      paths:
+        - coverage.xml
+
+  # Job de análise de segurança com Bandit
+  security_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.10'
+      - name: Install Bandit
+        run: |
+          pip install bandit
+      - name: Run Bandit security scan
+        run: |
+          bandit -r todo_project --severity-level high
+    artifacts:
+      paths:
+        - bandit-report.txt
+
+  # Job de análise de dependências com OWASP Dependency-Check
+  dependency_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download Dependency-Check
+        run: |
+          curl -LJO https://dl.bintray.com/jeremydmiller/dependency-check-debian/5.3.2/dependency-check_5.3.2-1_all.deb
+          sudo dpkg -i dependency-check_5.3.2-1_all.deb
+      - name: Run OWASP Dependency-Check
+        run: |
+          dependency-check.sh --project "todo_project" --scan . --format "XML" --out dependency-check-report.xml
+    artifacts:
+      paths:
+        - dependency-check-report.xml
+
+  # Job de análise de segurança com OWASP ZAP
+  zap_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build and run Flask app
+        run: |
+          docker network create zap_network
+          docker build -t frankstark/todo-flask .
+          docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask
+      - name: Run ZAP scan
+        run: |
+          docker run --network zap_network -v $(pwd):/zap/wrk owasp/zap2docker-stable zap-baseline.py -t http://flask-app:5000 -r /zap/wrk/zap-report.html
+    artifacts:
+      paths:
+        - zap-report.html
+
+  # Job de monitoramento com Prometheus e Grafana
+  monitoring:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start Prometheus and Grafana
+        run: |
+          docker network create monitor_network
+          docker run -d --name prometheus --network monitor_network -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest
+          docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
+    timeout-minutes: 10
+
+  # Job de deploy
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Build and deploy Docker container
+        run: |
+          docker build -t frankstark/todo-flask .
+          docker stop $(docker ps --filter "publish=5000" -q) || true
+          docker rm $(docker ps --filter "publish=5000" -q) || true
+          docker run -d -p 5000:5000 frankstark/todo-flask
