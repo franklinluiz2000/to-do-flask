@@ -24,6 +24,7 @@ build_job:
     - docker:20.10.16-dind
   script:
     - echo "Building Docker image..."
+    - docker network create zap_network
     - docker build -t frankstark/todo-flask .
   only:
     - main
@@ -94,8 +95,7 @@ zap_scan:
     - wget https://github.com/zaproxy/zaproxy/releases/download/v2.15.0/ZAP_2.15.0_Linux.tar.gz
     - mkdir zap
     - tar -xvf ZAP_2.15.0_Linux.tar.gz
-    - cd ZAP_2.15.0
-    - docker network create zap_network
+    - cd ZAP_2.15.0    
     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
     - ./zap.sh -cmd --network zap_network -t http://flask-app:5000 -quickprogress -quickout ../zap_report.html
     - cd ..
