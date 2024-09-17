@@ -100,10 +100,10 @@ zap_scan:
     # Rodar o ZAP e realizar a análise de segurança
     - docker run --rm --network zap_network -v $(pwd)/zap-config.conf:/zap/wrk/zap-config.conf ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf -J /zap/wrk/zap_report.json || true
     
-    # Analisar o relatório JSON, mas não fazer o pipeline falhar
-    - jq '.alerts | length' /zap/wrk/zap_report.json || true
-    - ALERTS_COUNT=$(jq '.alerts | length' /zap/wrk/zap_report.json || echo "0")
-    - echo "Number of alerts found:" $ALERTS_COUNT
+    # # Analisar o relatório JSON, mas não fazer o pipeline falhar
+    # - jq '.alerts | length' /zap/wrk/zap_report.json || true
+    # - ALERTS_COUNT=$(jq '.alerts | length' /zap/wrk/zap_report.json || echo "0")
+    # - echo "Number of alerts found:" $ALERTS_COUNT
 
     # Aqui você pode decidir o que fazer com o resultado, como enviar uma notificação, mas não falhar o pipeline
   artifacts:
