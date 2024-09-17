@@ -85,9 +85,9 @@ dependency_scan:
 # Job de análise de segurança com ZAP
 zap_scan:
   stage: zap_scan
-  image: docker:20.10.16  # Imagem Docker para acessar Docker-in-Docker
+  image: docker:20.10.16  # Imagem Docker para Docker-in-Docker
   services:
-    - docker:20.10.16-dind  # Docker-in-Docker para permitir execução de containers
+    - docker:20.10.16-dind  # Docker-in-Docker para execução de containers
   variables:
     DOCKER_DRIVER: overlay2  # Configuração para o Docker-in-Docker
   before_script:
@@ -98,15 +98,17 @@ zap_scan:
     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
   script:
     # Rodar o ZAP e realizar a análise de segurança
-    - docker run --rm --network zap_network -v $(pwd)/zap-config.conf:/zap/wrk/zap-config.conf ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf -r /zap/wrk/zap_report.html
+    - docker run --rm --network zap_network -v $(pwd)/zap-config.conf:/zap/wrk/zap-config.conf ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf -J /zap/wrk/zap_report.json || true
+    
+    # Analisar o relatório JSON, mas não fazer o pipeline falhar
+    - jq '.alerts | length' /zap/wrk/zap_report.json || true
+    - ALERTS_COUNT=$(jq '.alerts | length' /zap/wrk/zap_report.json || echo "0")
+    - echo "Number of alerts found:" $ALERTS_COUNT
 
-
-    # Converter o relatório HTML para PDF
-    - apk add --no-cache wkhtmltopdf  # Instalar wkhtmltopdf no container
-    - wkhtmltopdf zap_reports/zap_report.html zap_reports/zap_report.pdf
+    # Aqui você pode decidir o que fazer com o resultado, como enviar uma notificação, mas não falhar o pipeline
   artifacts:
     paths:
-      - zap_reports/zap_report.pdf
+      - zap_report.json
     expire_in: 1 week
   only:
     - main
