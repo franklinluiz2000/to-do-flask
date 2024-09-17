@@ -85,27 +85,17 @@ dependency_scan:
 # Job de análise de segurança com ZAP
 zap_scan:
   stage: zap_scan
-  image: docker:20.10.16  # Imagem Docker para Docker-in-Docker
+  image: docker:20.10.16 
   services:
-    - docker:20.10.16-dind  # Docker-in-Docker para execução de containers
+    - docker:20.10.16-dind 
   variables:
-    DOCKER_DRIVER: overlay2  # Configuração para o Docker-in-Docker
+    DOCKER_DRIVER: overlay2 
   before_script:
-    # Criação da rede Docker para o ZAP e a aplicação
     - docker network create zap_network || true
-
-    # Rodar a aplicação Flask
     - docker run -d --name flask-app --network zap_network -p 5000:5000 frankstark/todo-flask:latest
   script:
-    # Rodar o ZAP e realizar a análise de segurança
     - docker run --rm --network zap_network -v $(pwd)/zap-config.conf:/zap/wrk/zap-config.conf ghcr.io/zaproxy/zaproxy:stable zap-baseline.py -t http://flask-app:5000 -c /zap/wrk/zap-config.conf -J /zap/wrk/zap_report.json || true
     
-    # # Analisar o relatório JSON, mas não fazer o pipeline falhar
-    # - jq '.alerts | length' /zap/wrk/zap_report.json || true
-    # - ALERTS_COUNT=$(jq '.alerts | length' /zap/wrk/zap_report.json || echo "0")
-    # - echo "Number of alerts found:" $ALERTS_COUNT
-
-    # Aqui você pode decidir o que fazer com o resultado, como enviar uma notificação, mas não falhar o pipeline
   artifacts:
     paths:
       - zap_report.json
@@ -154,9 +144,7 @@ monitoring_job:
     - echo "Starting Prometheus and Grafana..."
     - docker network create monitor_network
   script:
-    # Start Prometheus
     - docker run -d --name prometheus --network monitor_network -p 9090:9090 -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus:latest
-    # Start Grafana
     - docker run -d --name grafana --network monitor_network -p 3000:3000 grafana/grafana:latest
     - sleep 10    
   only:
