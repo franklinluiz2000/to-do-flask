@@ -19,7 +19,7 @@ jobs:
       run: |
         curl https://cli-assets.heroku.com/install.sh | sh
 
-    # Passo 3: Fazer login no Heroku Container Registry
+    # Passo 3: Fazer login no Heroku
     - name: Login to Heroku
       env:
         HEROKU_API_KEY: ${{ secrets.HRKU-e549ebb9-4325-4c23-831a-c3a93410a035 }}
@@ -30,7 +30,8 @@ jobs:
     # Passo 4: Build e Push da imagem Docker para o Heroku
     - name: Build and Push Docker image to Heroku
       run: |
-        heroku container:push web --app ${{ secrets.todo-flask-35396f81c57d }}
+        docker build . -t registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+        docker push registry.heroku.com/${{ secrets.todo-flask-35396f81c57d }}/web
 
     # Passo 5: Liberar a aplicação no Heroku
     - name: Release the application on Heroku
