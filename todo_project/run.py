@@ -1,3 +1,4 @@
+from dotenv import load_dotenv
 from todo_project import app
 import os
 
