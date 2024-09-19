@@ -3,7 +3,7 @@ name: Deploy to Heroku
 on:
   push:
     branches:
-      - main  # ou a branch que você quer usar para o deploy
+      - main  # ou a branch que você deseja monitorar para deploy
 
 jobs:
   deploy:
@@ -12,9 +12,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
-
-    - name: Set up Docker
-      uses: actions/setup-docker@v2
 
     - name: Login to Heroku Container Registry
       run: echo ${{ secrets.HEROKU_API_KEY }} | docker login --username=_ --password-stdin registry.heroku.com
