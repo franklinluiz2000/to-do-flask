@@ -1,12 +1,6 @@
-from dotenv import load_dotenv
-from todo_project import app
-import os
+from todo_project import create_app
 
-# Carregar variáveis de ambiente do arquivo .env
-load_dotenv()
+app = create_app()
 
 if __name__ == '__main__':
-    # Defina o host e a porta para o Heroku e para rodar localmente
-    host = os.getenv('FLASK_RUN_HOST', '0.0.0.0')
-    port = int(os.getenv('PORT', 5000))  # Use a porta do Heroku se disponível
-    app.run(host=host, port=port)
+    app.run(host='0.0.0.0', port=5000, debug=True)
