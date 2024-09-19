@@ -42,3 +42,4 @@ jobs:
         run: |
           echo "Fetching Heroku logs..."
           heroku logs --tail --app ${{ secrets.HEROKU_APP_NAME }}
+
