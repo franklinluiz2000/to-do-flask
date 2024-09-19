@@ -20,4 +20,4 @@ EXPOSE 5000
 ENV FLASK_APP=todo_project/run.py
 
 # Comando para iniciar a aplicação usando gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "todo_project.run:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "todo_project.run:app"]
