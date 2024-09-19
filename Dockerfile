@@ -16,6 +16,8 @@ COPY . .
 # Exponha a porta que a aplicação irá rodar
 EXPOSE 5000
 
-# Comando para iniciar a aplicação
-CMD ["flask", "run", "--host=0.0.0.0"]
+# Defina a variável de ambiente para a aplicação Flask
 ENV FLASK_APP=todo_project/run.py
+
+# Comando para iniciar a aplicação usando gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:$PORT", "todo_project.run:app"]
