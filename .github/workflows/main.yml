@@ -21,13 +21,8 @@ jobs:
       env:
         HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
       run: |
-        echo "Logging in to Heroku Container Registry"
         echo $HEROKU_API_KEY | heroku auth:token
         heroku container:login
-
-    - name: Verify Heroku Login
-      run: |
-        heroku auth:whoami
 
     - name: Build and Push Docker image to Heroku
       run: |
@@ -37,3 +32,7 @@ jobs:
     - name: Release the application on Heroku
       run: |
         heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+
+    - name: Verify Deployment
+      run: |
+        heroku ps --app ${{ secrets.HEROKU_APP_NAME }}
