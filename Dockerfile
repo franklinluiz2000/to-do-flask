@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5000
 
 # Comando para iniciar a aplicação usando gunicorn
-CMD ["gunicorn", "-b", "0.0.0.0:5000", "todo_project.run:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:5000", "run:app"]
