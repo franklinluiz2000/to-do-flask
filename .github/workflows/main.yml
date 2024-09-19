@@ -28,6 +28,13 @@ jobs:
           echo "Building Docker Image..."
           docker build -t registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web .
           echo "Pushing Docker Image to Heroku..."
-          docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web     
+          docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+
+      - name: Release Docker Image on Heroku
+        run: |
+          echo "Releasing Docker Image on Heroku..."
+          docker run --rm -v ~/.netrc:/root/.netrc heroku/heroku:22 container:release web --app ${{ secrets.HEROKU_APP_NAME }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
