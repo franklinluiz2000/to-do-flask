@@ -13,7 +13,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Copie todo o código do projeto para o diretório de trabalho
 COPY . .
 
-# Exponha a porta que a aplicação irá rodar
+# Exponha a porta que a aplicação irá rodar (Heroku usará uma porta diferente)
 EXPOSE 5000
 
 # Defina a variável de ambiente para a aplicação Flask
