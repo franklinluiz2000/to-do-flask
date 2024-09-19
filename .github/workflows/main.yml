@@ -3,7 +3,7 @@ name: Deploy to Heroku
 on:
   push:
     branches:
-      - main  # ou a branch que você deseja monitorar para deploy
+      - main
 
 jobs:
   deploy:
@@ -16,14 +16,23 @@ jobs:
       - name: Login to Heroku Container Registry
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-        run: echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com
+        run: |
+          echo "Logging into Heroku Container Registry"
+          echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com
+
+      - name: Debug Docker Login
+        run: docker info
 
       - name: Build and Push Docker Image to Heroku
         run: |
+          echo "Building Docker Image..."
           docker build -t registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web .
+          echo "Pushing Docker Image to Heroku..."
           docker push registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web
 
       - name: Release the App on Heroku
-        run: heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
+        run: |
+          echo "Releasing the app..."
+          heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
