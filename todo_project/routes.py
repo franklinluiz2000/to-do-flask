@@ -1,6 +1,6 @@
 from flask import render_template, url_for, flash, redirect, request
 
-from . import db, bcrypt
+from . import db, bcrypt, app
 
 # Import the forms
 from .forms import (LoginForm, RegistrationForm, UpdateUserInfoForm, 
