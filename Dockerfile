@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Copie todo o código do projeto para o diretório de trabalho
-COPY . .
+COPY . /app
 
 # Exponha a porta que a aplicação irá rodar
 EXPOSE 5000

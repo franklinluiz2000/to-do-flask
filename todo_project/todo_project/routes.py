@@ -3,7 +3,7 @@ from flask import render_template, url_for, flash, redirect, request
 from todo_project.todo_project import db, bcrypt
 
 # Import the forms
-from todo_project.forms import (LoginForm, RegistrationForm, UpdateUserInfoForm, 
+from todo_project.todo_project.forms import (LoginForm, RegistrationForm, UpdateUserInfoForm, 
                                 UpdateUserPassword, TaskForm, UpdateTaskForm)
 
 # Import the Models
