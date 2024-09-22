@@ -86,4 +86,4 @@ login_manager.login_message_category = 'danger'
 bcrypt = Bcrypt(app)
 
 # Always put Routes at end
-from todo_project import routes
+from todo_project.todo_project import routes
