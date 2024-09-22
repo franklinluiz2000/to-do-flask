@@ -1,5 +1,4 @@
 from flask import Flask
-from .routes import *
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
@@ -86,3 +85,4 @@ login_manager.login_message_category = 'danger'
 
 bcrypt = Bcrypt(app)
 
+from todo_project import routes
