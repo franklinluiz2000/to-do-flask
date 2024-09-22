@@ -17,6 +17,4 @@ COPY . /app
 EXPOSE 5000
 
 # Comando para iniciar a aplicação usando gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:${PORT}", "run:app"]
-
-
+CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} run:app"]
