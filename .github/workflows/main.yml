@@ -1,4 +1,4 @@
-name: Deploy to Heroku
+name: Deploy and Security Check
 
 on:
   push:
@@ -6,14 +6,15 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Python environment
+      # Step 1: Setup Python environment
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.10'
@@ -23,28 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # Run Bandit for security checks
-      - name: Run Bandit Security Check
-        run: |
-          pip install bandit
-          bandit -r .
-
-       # OWASP Dependency-Check using dependency-check-action
-      - name: Run OWASP Dependency-Check
-        uses: dependency-check/depcheck-action@master
-        with:
-          format: "ALL"
-          outputDirectory: "./dependency-check-report"
-          project: "MyApp"
-          scanPath: "."
-          
-      - name: Upload Dependency-Check Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: dependency-check-report
-          path: dependency-check-report
-
-        # Acessando minha conta no heroku
+      # Step 2: Build Docker image for the application
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
@@ -54,7 +34,7 @@ jobs:
         run: |
           echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com
 
-      - name: Build Docker image
+      - name: Build Docker image for the application
         run: |
           docker build -t registry.heroku.com/${{ secrets.HEROKU_APP_NAME }}/web .
 
@@ -68,10 +48,27 @@ jobs:
         run: |
           heroku container:release web --app ${{ secrets.HEROKU_APP_NAME }}
 
+      # Step 3: Run OWASP Dependency-Check inside a Docker container
+      - name: Run OWASP Dependency-Check
+        run: |
+          docker run --rm \
+            -v $(pwd):/src \
+            owasp/dependency-check:latest \
+            --project "todo_project" \
+            --scan /src/requirements.txt \
+            --format "XML" \
+            --out /src/dependency-check-report.xml
+
+      # Step 4: Upload Dependency-Check Report as an artifact
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: dependency-check-report.xml
+
+      # Step 5: Check Heroku logs
       - name: Check Heroku logs
         env:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          echo "Fetching Heroku logs..."
-          heroku logs --tail --app ${{ secrets.HEROKU_APP_NAME }} 
-
+          heroku logs --tail --app ${{ secrets.HEROKU_APP_NAME }}
