@@ -1,6 +1,5 @@
 from flask import Flask
 from .routes import *
-from .models import db
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
