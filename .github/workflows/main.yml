@@ -29,17 +29,15 @@ jobs:
           pip install bandit
           bandit -r .
 
-       # OWASP Dependency-Check - Step to scan for vulnerable dependencies
-      - name: Install Dependency-Check
-        run: |
-          curl -L -o dependency-check.sh https://raw.githubusercontent.com/jeremylong/DependencyCheck/main/install.sh
-          chmod +x dependency-check.sh
-          ./dependency-check.sh --install
-
+       # OWASP Dependency-Check using dependency-check-action
       - name: Run OWASP Dependency-Check
-        run: |
-          ./dependency-check/bin/dependency-check.sh --project "MyApp" --scan . --format "ALL" --out dependency-check-report
-
+        uses: dependency-check/depcheck-action@master
+        with:
+          format: "ALL"
+          outputDirectory: "./dependency-check-report"
+          project: "MyApp"
+          scanPath: "."
+          
       - name: Upload Dependency-Check Report
         uses: actions/upload-artifact@v3
         with:
