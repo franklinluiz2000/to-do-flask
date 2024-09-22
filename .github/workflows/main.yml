@@ -46,7 +46,7 @@ jobs:
           name: dependency-check-report
           path: dependency-check-report
 
-        # Acessando o heroku
+        # Acessando minha conta no heroku
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
