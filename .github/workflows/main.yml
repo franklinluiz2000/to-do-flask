@@ -29,6 +29,24 @@ jobs:
           pip install bandit
           bandit -r .
 
+       # OWASP Dependency-Check - Step to scan for vulnerable dependencies
+      - name: Install Dependency-Check
+        run: |
+          curl -L -o dependency-check.sh https://raw.githubusercontent.com/jeremylong/DependencyCheck/main/install.sh
+          chmod +x dependency-check.sh
+          ./dependency-check.sh --install
+
+      - name: Run OWASP Dependency-Check
+        run: |
+          ./dependency-check/bin/dependency-check.sh --project "MyApp" --scan . --format "ALL" --out dependency-check-report
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v2
+        with:
+          name: dependency-check-report
+          path: dependency-check-report
+
+        # Acessando o heroku
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
