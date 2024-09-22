@@ -77,6 +77,7 @@ def test_metrics():
 
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 login_manager = LoginManager(app)
@@ -85,4 +86,5 @@ login_manager.login_message_category = 'danger'
 
 bcrypt = Bcrypt(app)
 
+from todo_project import models
 from todo_project import routes
