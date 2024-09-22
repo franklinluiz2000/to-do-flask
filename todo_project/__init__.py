@@ -11,6 +11,16 @@ from prometheus_flask_exporter import PrometheusMetrics
 from flask import Flask
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+bcrypt = Bcrypt(app)
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'login' 
+login_manager.login_message_category = 'danger'
+
 
 # Adcionando segurança
 # Configurações de cookies
@@ -74,17 +84,4 @@ metrics.info('app_info', 'Aplicação Flask info', version='1.0.0')
 def test_metrics():
     return "Metrics are being collected."
 
-
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-
-login_manager = LoginManager(app)
-login_manager.login_view = 'login' 
-login_manager.login_message_category = 'danger'
-
-bcrypt = Bcrypt(app)
-
-from todo_project import models
-from todo_project import routes
+from todo_project import models, routes
